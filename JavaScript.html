@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image to Code</title>
+    <script type="text/javascript">
+		function scaleImage() {
+			var ImageGroupNumber = document.getElementById("ImageGroupNumber").value;
+			var imageNumber = document.getElementById("imageNumber").value;
+			var imageFile = document.getElementById("imageFile").files[0];
+			var resolution = document.getElementById("resolution").value;
+			var time = document.getElementById("time").value;
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext("2d");
+			var arduinoArray = document.getElementById("arduinoArray");
+			var img = new Image();
+			img.onload = function() {
+				var ratio = img.height / img.width;
+				var height = resolution * ratio;
+				canvas.width = resolution;
+				canvas.height = height;
+				ctx.drawImage(img, 0, 0, resolution, height);
+				var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+				var data = imageData.data;
+				var fileName = imageFile.name;
+				var arduinoString = "//"
+                                arduinoString += "\n";
+                                arduinoString += "// -------------------------------------------------------------------------------------|"
+                                arduinoString += "\n";
+                                arduinoString += "// |  Group: " + ImageGroupNumber + "  |  Pattern: " + imageNumber + "  |  Name: " + fileName + ""
+                                arduinoString += "\n";
+                                arduinoString += "// -------------------------------------------------------------------------------------|"
+                                arduinoString += "\n";
+                                arduinoString += "#define IMAGE_" + ImageGroupNumber + "_" + imageNumber + "_TIMER " + time + "  //   <---  Time in milliseconds for this pattern timer    |"
+                                arduinoString += "\n";
+                                arduinoString += "int image_" + ImageGroupNumber + "_" + imageNumber + "_width = " + canvas.height + "; //////////////////////////////////////////////////////////////"
+                                arduinoString += "\n";
+                                arduinoString += "uint8_t image_" + ImageGroupNumber + "_" + imageNumber + "[" + canvas.height + "][" + canvas.width + "][3] = {\n";
+				
+				for (var y = 0; y < canvas.height; y++) {
+					arduinoString += "      { ";
+					for (var x = 0; x < canvas.width; x++) {
+						var index = (y * canvas.width + x) * 4;
+						var r = data[index];
+						var g = data[index + 1];
+						var b = data[index + 2];
+						arduinoString += "{ " + r + ", " + g + ", " + b + " }";
+						if (x < canvas.width - 1) {
+							arduinoString += ", ";
+						}
+					}
+					arduinoString += " }";
+					if (y < canvas.height - 1) {
+						arduinoString += ",";
+					}
+					arduinoString += "\n";
+				}
+				
+				arduinoString += "};  ///////////////////////////////////////////////////////////////////////////////////"
+                                arduinoString += "\n";
+                                arduinoString += "//";
+				arduinoArray.textContent = arduinoString;
+			};
+			img.src = URL.createObjectURL(imageFile);
+		}
+	</script>
+    <style>
+		body {
+			background-color: #999999;font-family:Arial;
+text-align:left;
+		}
+	</style>
+  </head>
+  <body>
+    <label for="resolution">Resolution:</label> <input id="resolution" style="margin-left: 34px; width: 57px;" type="number"><br>
+    <br>
+    <label for="time">Timer:</label> <input id="time" style="margin-left: 70px; width: 57px;" type="number"><br>
+    <br>
+    <label for="ImageGroupNumber">Group number:</label> <input id="ImageGroupNumber" style="margin-left: 8px; width: 57px;" type="number"><br>
+    <br>
+    <label for="imageNumber">Pattern number:</label> <input id="imageNumber" style="width: 57px;" type="number"><br>
+    <br>
+    <label for="imageFile">Select Image</label> <input id="imageFile" style="margin-left: 20px;" type="file"><br>
+    <br>
+    <button onclick="scaleImage()" style="margin-left: 30px; width: 110px; height: 30px;"><b>Get Code</b></button><br>
+    <br>
+    <canvas id="canvas"></canvas><br>
+    <br>
+    <pre id="arduinoArray"></pre>
+  </body>
+</html>
